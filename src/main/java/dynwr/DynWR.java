@@ -24,7 +24,6 @@ public class DynWR implements ModInitializer {
 	// It is considered best practice to use your mod id as the logger's name.
 	// That way, it's clear which mod wrote info, warnings, and errors.
     public static final Logger LOGGER = LoggerFactory.getLogger("dynwr");
-    public static final Item CUSTOM_ITEM = new Item(new FabricItemSettings());
 
 	public class WorldHooker implements ServerWorldEvents.Load {
 		public void onWorldLoad(MinecraftServer server, ServerWorld world) {
