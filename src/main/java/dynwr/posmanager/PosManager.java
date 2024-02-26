@@ -67,28 +67,32 @@ public class PosManager {
 	}
 
 	public SpawnPointConfig getSpawnPointConfig() {
-		float x, y, z, factor;
+		float x, y, z;
 		double radious;
 		BlockPos spawnPoint;
 		BlockPos p0 = this.blockEntries.get(0);
-		x = p0.getX();
-		y = p0.getY();
-		z = p0.getZ();
-		factor = 1 / this.blockEntries.size();
+		x = 0;
+		y = 0;
+		z = 0;
 
-		for (int i = 1; i < this.blockEntries.size(); i++) {
+		for (int i = 0; i < this.blockEntries.size(); i++) {
 			BlockPos p = this.blockEntries.get(i);
-			x = x + p.getX() * factor;
-			y = y + p.getY() * factor;
-			z = z + p.getZ() * factor;
-			LOGGER.info(String.format("On iter %d coords are %f, %f, %f", i, x, y, z));
+			x = x + p.getX();
+			y = y + p.getY();
+			z = z + p.getZ();
+			LOGGER.info(String.format("On iter %d coords sum is %f, %f, %f", i, x, y, z));
 		}
+		x = x / this.blockEntries.size();
+		y = y / this.blockEntries.size();
+		z = z / this.blockEntries.size();
 		spawnPoint = new BlockPos((int) x, (int) y, (int) z);
 
-		radious = p0.getSquaredDistance(spawnPoint);
-		for (int i = 1; i < this.blockEntries.size(); i++) {
-			radious += this.blockEntries.get(i).getSquaredDistance(spawnPoint) * factor;
+		radious = 0;
+		for (int i = 0; i < this.blockEntries.size(); i++) {
+			radious += this.blockEntries.get(i).getSquaredDistance(spawnPoint);
 		}
+		radious = radious / this.blockEntries.size();
+
 
 		this.lastRadius = radious;
 		this.lastPos = spawnPoint;
