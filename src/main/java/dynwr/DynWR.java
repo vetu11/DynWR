@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dynwr.posmanager.PosManager;
+import dynwr.posmanager.PosManager.SpawnPointConfig;
 
 
 public class DynWR implements ModInitializer {
@@ -37,37 +38,48 @@ public class DynWR implements ModInitializer {
 		}
 
 		public void onWorldLoad(MinecraftServer server, ServerWorld world) {
-			EntitySleepEvents.STOP_SLEEPING.register(new RegisterWakeUp(world));
-			ServerPlayerEvents.AFTER_RESPAWN.register(new RegisterRespawn(world));
+			EntitySleepEvents.STOP_SLEEPING.register(new RegisterWakeUp(this.posManager, world));
+			ServerPlayerEvents.AFTER_RESPAWN.register(new RegisterRespawn(this.posManager, world));
 		}
 	}
 
 	public class RegisterWakeUp implements StopSleeping {
 		private PosManager posManager;
+		private ServerWorld world;
 
-		public RegisterWakeUp(PosManager posManager) {
+		public RegisterWakeUp(PosManager posManager, ServerWorld world) {
 			this.posManager = posManager;
+			this.world = world;
 		}
 
 		@Override
 		public void onStopSleeping(LivingEntity entity, BlockPos sleepingPos) {
 			this.posManager.addPos(sleepingPos, entity.getUuid());
+
+			SpawnPointConfig spawn = this.posManager.getSpawnPointConfig();
+			this.world.setSpawnPos(spawn.spawnPoint, 0);
+			// TODO: Change spawnRadious
 		}
 	}
 
 	public class RegisterRespawn implements AfterRespawn {
 		private PosManager posManager;
+		private ServerWorld world;
 
-		public RegisterRespawn(PosManager posManager) {
+		public RegisterRespawn(PosManager posManager, ServerWorld wolrd) {
 			this.posManager = posManager;
+			this.world = world;
 		}
 
 		@Override
 		public void afterRespawn(ServerPlayerEntity oldPlayer, ServerPlayerEntity newPlayer, boolean alive) {
-			// TODO: Change the spawnpoint with this.
 			Vec3d p = newPlayer.getPos();
 			BlockPos pos = new BlockPos((int)p.x, (int)p.y, (int)p.z);
 			this.posManager.addPos(pos, newPlayer.getUuid());
+
+			SpawnPointConfig spawn = this.posManager.getSpawnPointConfig();
+			this.world.setSpawnPos(spawn.spawnPoint, 0);
+			// TODO: Change spawnRadious
 		}
 	}
 
