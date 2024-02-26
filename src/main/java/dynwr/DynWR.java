@@ -54,6 +54,7 @@ public class DynWR implements ModInitializer {
 
 		@Override
 		public void onStopSleeping(LivingEntity entity, BlockPos sleepingPos) {
+			LOGGER.info("onStopSleeping");
 			this.posManager.addPos(sleepingPos, entity.getUuid());
 
 			SpawnPointConfig spawn = this.posManager.getSpawnPointConfig();
@@ -73,6 +74,7 @@ public class DynWR implements ModInitializer {
 
 		@Override
 		public void afterRespawn(ServerPlayerEntity oldPlayer, ServerPlayerEntity newPlayer, boolean alive) {
+			LOGGER.info("afterRespawn");
 			Vec3d p = newPlayer.getPos();
 			BlockPos pos = new BlockPos((int)p.x, (int)p.y, (int)p.z);
 			this.posManager.addPos(pos, newPlayer.getUuid());

@@ -7,6 +7,9 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.Map.Entry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.minecraft.util.math.BlockPos;
 
 //public class PosManager extends PersistentState {
@@ -14,6 +17,7 @@ public class PosManager {
 	private static final int ENTRIES_PER_PLAYER = 10;
 	private static final int MAX_PLAYER_ENTRIES = 50;
 	private static final Duration PERIOD_DURATION = Duration.ofHours(22);
+    public static final Logger LOGGER = LoggerFactory.getLogger("dynwr");
 
 	// TODO: persistence.
 	// TODO: implemet period.
@@ -43,6 +47,7 @@ public class PosManager {
 	}
 
 	public void addPos(BlockPos newpos, UUID source) {
+		LOGGER.info(String.format("Adding newpos: %s", newpos));
 		if (this.uuidCount.containsKey(source)) {
 			this.uuidCount.put(source, this.uuidCount.get(source) + 1);
 		} else {
@@ -51,6 +56,7 @@ public class PosManager {
 		this.limitUuidCount();
 			
 		this.blockEntries.add(newpos);
+		LOGGER.info(String.format("Currently have %d entries", this.blockEntries.size()));
 
 		while (this.blockEntries.size()
 				> this.uuidCount.size() * PosManager.ENTRIES_PER_PLAYER)
@@ -75,6 +81,7 @@ public class PosManager {
 			x = x + p.getX() * factor;
 			y = y + p.getY() * factor;
 			z = z + p.getZ() * factor;
+			LOGGER.info(String.format("On iter %d coords are %f, %f, %f", i, x, y, z));
 		}
 		spawnPoint = new BlockPos((int) x, (int) y, (int) z);
 
@@ -85,14 +92,17 @@ public class PosManager {
 
 		this.lastRadius = radious;
 		this.lastPos = spawnPoint;
+		LOGGER.info(String.format("New spawn point: %s, radious: %d", spawnPoint, (int) radious));
 		return new SpawnPointConfig(spawnPoint, (float) radious);
 	}
 
 	private void limitUuidCount() {
+		LOGGER.info("Limiting uuidCount");
 		int sum = 0;
 		for (int c: uuidCount.values()) {
 			sum += c;
 		}
+		LOGGER.info(String.format("Current uuidCount sum is: %d", sum));
 
 		if (sum > PosManager.MAX_PLAYER_ENTRIES) {
 			HashMap<UUID, Integer> limitedCount = new HashMap<>();
