@@ -1,6 +1,5 @@
-package dynrw.posmanager;
+package dynwr.posmanager;
 
-import java.net.FileNameMap;
 import java.time.Duration;
 import java.util.Date;
 import java.util.HashMap;
@@ -8,15 +7,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.Map.Entry;
 
-import javax.swing.text.StyledEditorKit.BoldAction;
-
-import org.spongepowered.tools.obfuscation.mirror.TypeHandle;
-
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.PersistentState;
 
 //public class PosManager extends PersistentState {
 public class PosManager {
