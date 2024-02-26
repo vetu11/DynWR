@@ -19,6 +19,9 @@ import net.minecraft.util.math.Vec3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dynwr.posmanager.PosManager;
+
+
 public class DynWR implements ModInitializer {
 	// This logger is used to write text to the console and the log file.
 	// It is considered best practice to use your mod id as the logger's name.
@@ -26,6 +29,13 @@ public class DynWR implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("dynwr");
 
 	public class WorldHooker implements ServerWorldEvents.Load {
+		private PosManager posManager;
+
+		public WorldHooker(){
+			//TODO: Persistence
+			this.posManager = new PosManager();
+		}
+
 		public void onWorldLoad(MinecraftServer server, ServerWorld world) {
 			EntitySleepEvents.STOP_SLEEPING.register(new RegisterWakeUp(world));
 			ServerPlayerEvents.AFTER_RESPAWN.register(new RegisterRespawn(world));
@@ -33,30 +43,31 @@ public class DynWR implements ModInitializer {
 	}
 
 	public class RegisterWakeUp implements StopSleeping {
-		private ServerWorld world;
+		private PosManager posManager;
 
-		public RegisterWakeUp(ServerWorld world) {
-			this.world = world;
+		public RegisterWakeUp(PosManager posManager) {
+			this.posManager = posManager;
 		}
 
 		@Override
 		public void onStopSleeping(LivingEntity entity, BlockPos sleepingPos) {
-			this.world.setSpawnPos(sleepingPos, 0);
+			this.posManager.addPos(sleepingPos, entity.getUuid());
 		}
 	}
 
 	public class RegisterRespawn implements AfterRespawn {
-		private ServerWorld world;
+		private PosManager posManager;
 
-		public RegisterRespawn(ServerWorld world) {
-			this.world = world;
+		public RegisterRespawn(PosManager posManager) {
+			this.posManager = posManager;
 		}
 
 		@Override
 		public void afterRespawn(ServerPlayerEntity oldPlayer, ServerPlayerEntity newPlayer, boolean alive) {
 			// TODO: Change the spawnpoint with this.
 			Vec3d p = newPlayer.getPos();
-			new BlockPos((int)p.x, (int)p.y, (int)p.z);
+			BlockPos pos = new BlockPos((int)p.x, (int)p.y, (int)p.z);
+			this.posManager.addPos(pos, newPlayer.getUuid());
 		}
 	}
 
