@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.Map.Entry;
 
+import javax.naming.ldap.Rdn;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,16 +84,21 @@ public class PosManager {
 			z = z + p.getZ();
 			LOGGER.info(String.format("On iter %d coords sum is %f, %f, %f", i, x, y, z));
 		}
+		LOGGER.info(String.format("After iter coords sum is %f, %f, %f", x, y, z));
 		x = x / this.blockEntries.size();
 		y = y / this.blockEntries.size();
 		z = z / this.blockEntries.size();
+		LOGGER.info(String.format("After avg coords are is %f, %f, %f", x, y, z));
 		spawnPoint = new BlockPos((int) x, (int) y, (int) z);
 
 		radious = 0;
 		for (int i = 0; i < this.blockEntries.size(); i++) {
-			radious += this.blockEntries.get(i).getSquaredDistance(spawnPoint);
-		}
+			radious += Math.sqrt(this.blockEntries.get(i).getSquaredDistance(spawnPoint));
+		
 		radious = radious / this.blockEntries.size();
+		if (radious < 10) {
+			radious = 10;
+		}
 
 
 		this.lastRadius = radious;
