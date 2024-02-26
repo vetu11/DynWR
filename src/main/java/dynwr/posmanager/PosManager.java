@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.Map.Entry;
 
-import javax.naming.ldap.Rdn;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,6 +92,7 @@ public class PosManager {
 		radious = 0;
 		for (int i = 0; i < this.blockEntries.size(); i++) {
 			radious += Math.sqrt(this.blockEntries.get(i).getSquaredDistance(spawnPoint));
+		}
 		
 		radious = radious / this.blockEntries.size();
 		if (radious < 10) {

@@ -1,20 +1,18 @@
 package dynwr;
 
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents.StopSleeping;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents.AfterRespawn;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
-
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.Item;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.GameRules;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +36,7 @@ public class DynWR implements ModInitializer {
 		}
 
 		public void onWorldLoad(MinecraftServer server, ServerWorld world) {
+			if (!world.getDimension().bedWorks()) return;
 			PosManager pm = new PosManager();
 			EntitySleepEvents.STOP_SLEEPING.register(new RegisterWakeUp(pm, world));
 			ServerPlayerEvents.AFTER_RESPAWN.register(new RegisterRespawn(pm, world));
@@ -60,7 +59,8 @@ public class DynWR implements ModInitializer {
 
 			SpawnPointConfig spawn = this.posManager.getSpawnPointConfig();
 			this.world.setSpawnPos(spawn.spawnPoint, 0);
-			// TODO: Change spawnRadious
+			this.world.getServer().getGameRules().get(GameRules.SPAWN_RADIUS)
+				.set((int)spawn.spawnRadious, world.getServer());
 		}
 	}
 
@@ -74,7 +74,7 @@ public class DynWR implements ModInitializer {
 		}
 
 		@Override
-		public void afterRespawn(ServerPlayerEntity oldPlayer, ServerPlayerEntity newPlayer, boolean alive) {
+		public void afterRespawn(ServerPlayerEntity _oldPlayer, ServerPlayerEntity newPlayer, boolean _alive) {
 			LOGGER.info("afterRespawn");
 			Vec3d p = newPlayer.getPos();
 			BlockPos pos = new BlockPos((int)p.x, (int)p.y, (int)p.z);
@@ -82,7 +82,8 @@ public class DynWR implements ModInitializer {
 
 			SpawnPointConfig spawn = this.posManager.getSpawnPointConfig();
 			this.world.setSpawnPos(spawn.spawnPoint, 0);
-			// TODO: Change spawnRadious
+			this.world.getServer().getGameRules().get(GameRules.SPAWN_RADIUS)
+				.set((int)spawn.spawnRadious, world.getServer());
 		}
 	}
 
