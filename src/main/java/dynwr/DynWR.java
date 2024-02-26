@@ -66,7 +66,7 @@ public class DynWR implements ModInitializer {
 		private PosManager posManager;
 		private ServerWorld world;
 
-		public RegisterRespawn(PosManager posManager, ServerWorld wolrd) {
+		public RegisterRespawn(PosManager posManager, ServerWorld world) {
 			this.posManager = posManager;
 			this.world = world;
 		}
