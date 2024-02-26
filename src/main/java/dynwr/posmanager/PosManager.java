@@ -1,9 +1,9 @@
 package dynwr.posmanager;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.UUID;
 import java.util.Map.Entry;
 
@@ -19,9 +19,9 @@ public class PosManager {
 	// TODO: implemet period.
 	private Date currentPeriodStart;
 	private BlockPos lastPos;
-	private float lastRadius;
+	private double lastRadius;
 	private HashMap<UUID, Integer> uuidCount;
-	private List<BlockPos> blockEntries;
+	private ArrayList<BlockPos> blockEntries;
 	
 	//private static Type<PosManager> type = new Type<>(
 	//		PosManager::new,
@@ -37,11 +37,16 @@ public class PosManager {
 		}
 	}
 
+	public PosManager() {
+		this.uuidCount = new HashMap<>();
+		this.blockEntries = new ArrayList<>();
+	}
+
 	public void addPos(BlockPos newpos, UUID source) {
 		if (this.uuidCount.containsKey(source)) {
 			this.uuidCount.put(source, this.uuidCount.get(source) + 1);
 		} else {
-			this.uuidCount.put(source, this.uuidCount.get(source));
+			this.uuidCount.put(source, 1);
 		}
 		this.limitUuidCount();
 			
@@ -78,6 +83,8 @@ public class PosManager {
 			radious += this.blockEntries.get(i).getSquaredDistance(spawnPoint) * factor;
 		}
 
+		this.lastRadius = radious;
+		this.lastPos = spawnPoint;
 		return new SpawnPointConfig(spawnPoint, (float) radious);
 	}
 
