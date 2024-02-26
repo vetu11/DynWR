@@ -38,8 +38,9 @@ public class DynWR implements ModInitializer {
 		}
 
 		public void onWorldLoad(MinecraftServer server, ServerWorld world) {
-			EntitySleepEvents.STOP_SLEEPING.register(new RegisterWakeUp(this.posManager, world));
-			ServerPlayerEvents.AFTER_RESPAWN.register(new RegisterRespawn(this.posManager, world));
+			PosManager pm = new PosManager();
+			EntitySleepEvents.STOP_SLEEPING.register(new RegisterWakeUp(pm, world));
+			ServerPlayerEvents.AFTER_RESPAWN.register(new RegisterRespawn(pm, world));
 		}
 	}
 
