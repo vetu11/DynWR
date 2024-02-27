@@ -29,16 +29,10 @@ public class DynWR implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("dynwr");
 
 	public class WorldHooker implements ServerWorldEvents.Load {
-		private PosManager posManager;
-
-		public WorldHooker(){
-			this.posManager = new PosManager();
-		}
-
 		public void onWorldLoad(MinecraftServer server, ServerWorld world) {
+			if (!world.getDimension().bedWorks()) return;
 			PersistentStateManager per = world.getPersistentStateManager();
 			PosManager pm = per.getOrCreate(PosManager::createFromNbt, PosManager::new, "dynwr:pos_manager");
-			if (!world.getDimension().bedWorks()) return;
 			EntitySleepEvents.STOP_SLEEPING.register(new RegisterWakeUp(pm, world));
 			ServerPlayerEvents.AFTER_RESPAWN.register(new RegisterRespawn(pm, world));
 		}
