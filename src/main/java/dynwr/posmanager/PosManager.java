@@ -18,7 +18,6 @@ import net.minecraft.world.PersistentState;
 
 public class PosManager extends PersistentState {
 	private static final int ENTRIES_PER_PLAYER = 10;
-	private static final int MAX_PLAYER_ENTRIES = 50;
 	private static final Duration PERIOD_DURATION = Duration.ofHours(22);
     public static final Logger LOGGER = LoggerFactory.getLogger("dynwr");
 
@@ -163,12 +162,11 @@ public class PosManager extends PersistentState {
 		for (int c: uuidCount.values()) {
 			sum += c;
 		}
-		LOGGER.info(String.format("Current uuidCount sum is %d discributed in %d entries",
+		LOGGER.info(String.format("Pre uuidCount sum is %d distributed in %d entries",
 									sum,
 									uuidCount.size()));
 
-		// TODO: Update the limit to be player dependant.
-		if (sum > PosManager.MAX_PLAYER_ENTRIES) {
+		while (sum > (this.uuidCount.size() * ENTRIES_PER_PLAYER + 1)) {
 			HashMap<UUID, Integer> limitedCount = new HashMap<>();
 			for (Entry<UUID, Integer> entry: uuidCount.entrySet()) {
 				if (entry.getValue() > 1) {
@@ -176,7 +174,15 @@ public class PosManager extends PersistentState {
 				}
 				this.uuidCount = limitedCount;
 			}
-		}
+
+			sum = 0;
+			for (int c: this.uuidCount.values()) {
+				sum += c;
+			}
+			}
+		LOGGER.info(String.format("After uuidCount sum is %d discributed in %d entries",
+									sum,
+									this.uuidCount.size()));
 	}
 
 	@Override
