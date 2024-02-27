@@ -55,7 +55,7 @@ public class DynWR implements ModInitializer {
 
 		@Override
 		public void onStopSleeping(LivingEntity entity, BlockPos sleepingPos) {
-			//TODO: check if it's a player.
+			if (!entity.isPlayer()) return;
 			LOGGER.info("onStopSleeping");
 			this.posManager.addPos(sleepingPos, entity.getUuid());
 
