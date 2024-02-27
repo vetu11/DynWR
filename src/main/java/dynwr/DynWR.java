@@ -13,6 +13,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameRules;
+import net.minecraft.world.PersistentStateManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,13 +32,13 @@ public class DynWR implements ModInitializer {
 		private PosManager posManager;
 
 		public WorldHooker(){
-			//TODO: Persistence
 			this.posManager = new PosManager();
 		}
 
 		public void onWorldLoad(MinecraftServer server, ServerWorld world) {
+			PersistentStateManager per = world.getPersistentStateManager();
+			PosManager pm = per.getOrCreate(PosManager::createFromNbt, PosManager::new, "dynwr:pos_manager");
 			if (!world.getDimension().bedWorks()) return;
-			PosManager pm = new PosManager();
 			EntitySleepEvents.STOP_SLEEPING.register(new RegisterWakeUp(pm, world));
 			ServerPlayerEvents.AFTER_RESPAWN.register(new RegisterRespawn(pm, world));
 		}
@@ -54,6 +55,7 @@ public class DynWR implements ModInitializer {
 
 		@Override
 		public void onStopSleeping(LivingEntity entity, BlockPos sleepingPos) {
+			//TODO: check if it's a player.
 			LOGGER.info("onStopSleeping");
 			this.posManager.addPos(sleepingPos, entity.getUuid());
 

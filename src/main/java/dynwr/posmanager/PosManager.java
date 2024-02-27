@@ -10,16 +10,18 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtHelper;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.PersistentState;
 
-//public class PosManager extends PersistentState {
-public class PosManager {
+
+public class PosManager extends PersistentState {
 	private static final int ENTRIES_PER_PLAYER = 10;
 	private static final int MAX_PLAYER_ENTRIES = 50;
 	private static final Duration PERIOD_DURATION = Duration.ofHours(22);
     public static final Logger LOGGER = LoggerFactory.getLogger("dynwr");
 
-	// TODO: persistence.
 	// TODO: implemet period.
 	private Date currentPeriodStart;
 	private BlockPos lastPos;
@@ -27,10 +29,7 @@ public class PosManager {
 	private HashMap<UUID, Integer> uuidCount;
 	private ArrayList<BlockPos> blockEntries;
 	
-	//private static Type<PosManager> type = new Type<>(
-	//		PosManager::new,
-	//		PosManager::createFromNbt,
-	//		null);
+
 	public class SpawnPointConfig {
 		public final BlockPos spawnPoint;
 		public final float spawnRadious;
@@ -63,7 +62,7 @@ public class PosManager {
 		{
 			this.blockEntries.remove(0);
 		}
-		//this.markDirty();
+		this.markDirty();
 	}
 
 	public SpawnPointConfig getSpawnPointConfig() {
@@ -114,6 +113,7 @@ public class PosManager {
 		}
 		LOGGER.info(String.format("Current uuidCount sum is: %d", sum));
 
+		// TODO: Update the limit to be player dependant.
 		if (sum > PosManager.MAX_PLAYER_ENTRIES) {
 			HashMap<UUID, Integer> limitedCount = new HashMap<>();
 			for (Entry<UUID, Integer> entry: uuidCount.entrySet()) {
@@ -125,17 +125,41 @@ public class PosManager {
 		}
 	}
 
+	@Override
+	public NbtCompound writeNbt(NbtCompound nbt) {
+		nbt.putInt("blockEntriesSize", this.blockEntries.size());
+		for (int i = 0; i < this.blockEntries.size(); i++) {
+			nbt.put("entry_" + i, NbtHelper.fromBlockPos(this.blockEntries.get(i)));
+		}
 
-	//@Override
-	//public NbtCompound writeNbt(NbtCompound var1) {
-	//	// TODO Auto-generated method stub
-	//	return null;
-	//}
+		nbt.putInt("uuidCountSize", uuidCount.size());
+		int i = 0;
+		for (UUID k: this.uuidCount.keySet()) {
+			nbt.putUuid("uuid_" + i, k);
+			nbt.putInt(k.toString() + "_count", this.uuidCount.get(k));
+			i += 1;
+		}
+		return nbt;
+	}
 
-	//public PosManager createFromNbt(NbtCompound tag) {
-	//	// TODO
-	//	PosManager posmanager = PosManager();
+	public static PosManager createFromNbt(NbtCompound tag) {
+		PosManager posmanager = new PosManager();
+		int blockEntriesSize = tag.getInt("blockEntriesSize");
+		int uuidCountSize = tag.getInt("uuidCountSize");
+		ArrayList<BlockPos> blockEntries = new ArrayList<>(blockEntriesSize);
+		HashMap<UUID, Integer> uuidCount = new HashMap<>(uuidCountSize);
 
-	//}
+		for (int i = 0; i < blockEntriesSize; i++) {
+			blockEntries.add(NbtHelper.toBlockPos((NbtCompound) tag.get("entry_" + i)));
+		}
+		posmanager.blockEntries = blockEntries;
+
+		for (int i = 0; i < uuidCountSize; i++) {
+			UUID uuid = tag.getUuid("uuid_" + i);
+			uuidCount.put(uuid, tag.getInt(uuid.toString() + "_count"));
+		}
+		posmanager.uuidCount = uuidCount;
+		return posmanager;
+	}
 }
 
