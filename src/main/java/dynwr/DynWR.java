@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dynwr.posmanager.PosManager;
+import dynwr.posmanager.PosManager.EventType;
 import dynwr.posmanager.PosManager.SpawnPointConfig;
 
 
@@ -51,7 +52,7 @@ public class DynWR implements ModInitializer {
 		public void onStopSleeping(LivingEntity entity, BlockPos sleepingPos) {
 			if (!entity.isPlayer()) return;
 			LOGGER.info("onStopSleeping");
-			this.posManager.addPos(sleepingPos, entity.getUuid());
+			this.posManager.addPos(sleepingPos, entity.getUuid(), EventType.SLEEP);
 
 			SpawnPointConfig spawn = this.posManager.getSpawnPointConfig();
 			this.world.setSpawnPos(spawn.spawnPoint, 0);
@@ -74,7 +75,7 @@ public class DynWR implements ModInitializer {
 			LOGGER.info("afterRespawn");
 			Vec3d p = newPlayer.getPos();
 			BlockPos pos = new BlockPos((int)p.x, (int)p.y, (int)p.z);
-			this.posManager.addPos(pos, newPlayer.getUuid());
+			this.posManager.addPos(pos, newPlayer.getUuid(), EventType.RESPAWN);
 
 			SpawnPointConfig spawn = this.posManager.getSpawnPointConfig();
 			this.world.setSpawnPos(spawn.spawnPoint, 0);

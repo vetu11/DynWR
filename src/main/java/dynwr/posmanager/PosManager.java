@@ -1,8 +1,8 @@
 package dynwr.posmanager;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.Map.Entry;
@@ -22,13 +22,16 @@ public class PosManager extends PersistentState {
 	private static final Duration PERIOD_DURATION = Duration.ofHours(22);
     public static final Logger LOGGER = LoggerFactory.getLogger("dynwr");
 
-	// TODO: implemet period.
-	private Date currentPeriodStart;
-	private BlockPos lastPos;
-	private double lastRadius;
+	private Instant currentPeriodStart;
+	private HashMap<UUID, BlockPos> currentSleepEntries;
+	private HashMap<UUID, BlockPos> currentRespawnEntries;
 	private HashMap<UUID, Integer> uuidCount;
 	private ArrayList<BlockPos> blockEntries;
 	
+	public enum EventType {
+		SLEEP,
+		RESPAWN,
+	}
 
 	public class SpawnPointConfig {
 		public final BlockPos spawnPoint;
@@ -43,64 +46,113 @@ public class PosManager extends PersistentState {
 	public PosManager() {
 		this.uuidCount = new HashMap<>();
 		this.blockEntries = new ArrayList<>();
+		this.currentPeriodStart = Instant.now();
+		this.currentSleepEntries = new HashMap<>();
+		this.currentRespawnEntries = new HashMap<>();
 	}
 
-	public void addPos(BlockPos newpos, UUID source) {
-		LOGGER.info(String.format("Adding newpos: %s", newpos));
-		if (this.uuidCount.containsKey(source)) {
-			this.uuidCount.put(source, this.uuidCount.get(source) + 1);
-		} else {
-			this.uuidCount.put(source, 1);
+	private void engravePosEntries() {
+		LOGGER.info("Engraving entries");
+		for (Entry<UUID, BlockPos> entry: this.currentSleepEntries.entrySet()) {
+			if (this.uuidCount.containsKey(entry.getKey())) {
+				this.uuidCount.put(entry.getKey(), this.uuidCount.get(entry.getKey()) + 1);
+			} else {
+				this.uuidCount.put(entry.getKey(), 1);
+			}
+			this.blockEntries.add(entry.getValue());
+		}
+		for (Entry<UUID, BlockPos> entry: this.currentRespawnEntries.entrySet()) {
+			if (this.uuidCount.containsKey(entry.getKey())) {
+				this.uuidCount.put(entry.getKey(), this.uuidCount.get(entry.getKey()) + 1);
+			} else {
+				this.uuidCount.put(entry.getKey(), 1);
+			}
+			this.blockEntries.add(entry.getValue());
 		}
 		this.limitUuidCount();
-			
-		this.blockEntries.add(newpos);
-		LOGGER.info(String.format("Currently have %d entries", this.blockEntries.size()));
-
+		
 		while (this.blockEntries.size()
 				> this.uuidCount.size() * PosManager.ENTRIES_PER_PLAYER)
 		{
 			this.blockEntries.remove(0);
 		}
 		this.markDirty();
+		
+		this.currentSleepEntries = new HashMap<>(this.currentSleepEntries.size() + 5);
+		this.currentRespawnEntries = new HashMap<>(this.currentRespawnEntries.size() + 5);
+	}
+
+	public void addPos(BlockPos newpos, UUID source, EventType type) {
+		LOGGER.info(String.format("Adding newpos: %s", newpos));
+
+		switch (type) {
+			case SLEEP:
+				this.currentSleepEntries.put(source, newpos);
+				break;
+			case RESPAWN:
+				this.currentRespawnEntries.put(source, newpos);
+				break;
+		}
+		if (this.currentPeriodStart.plus(PERIOD_DURATION).compareTo(Instant.now()) < 0) {
+			this.engravePosEntries();
+			this.currentPeriodStart = Instant.now();
+		}
+		this.markDirty();
+	}
+
+	private ArrayList<BlockPos> allPosEntries() {
+		ArrayList<BlockPos> entries = new ArrayList<>(
+				this.blockEntries.size()
+				+ this.currentSleepEntries.size()
+				+ this.currentRespawnEntries.size());
+		for (int i = 0; i < this.blockEntries.size(); i++) {
+			entries.add(this.blockEntries.get(i));
+		}
+		for (BlockPos p: this.currentSleepEntries.values()) {
+			entries.add(p);
+		}
+		for (BlockPos p: this.currentRespawnEntries.values()) {
+			entries.add(p);
+		}
+		LOGGER.info(String.format("blockEntries: %d, sleep: %d, respawn: %d, total: %d",
+									this.blockEntries.size(),
+									this.currentSleepEntries.size(),
+									this.currentRespawnEntries.size(),
+									entries.size()));
+		return entries;
 	}
 
 	public SpawnPointConfig getSpawnPointConfig() {
+		ArrayList<BlockPos> entries = this.allPosEntries();
 		float x, y, z;
 		double radious;
 		BlockPos spawnPoint;
-		BlockPos p0 = this.blockEntries.get(0);
 		x = 0;
 		y = 0;
 		z = 0;
 
-		for (int i = 0; i < this.blockEntries.size(); i++) {
-			BlockPos p = this.blockEntries.get(i);
+		for (int i = 0; i < entries.size(); i++) {
+			BlockPos p = entries.get(i);
 			x = x + p.getX();
 			y = y + p.getY();
 			z = z + p.getZ();
-			LOGGER.info(String.format("On iter %d coords sum is %f, %f, %f", i, x, y, z));
 		}
-		LOGGER.info(String.format("After iter coords sum is %f, %f, %f", x, y, z));
-		x = x / this.blockEntries.size();
-		y = y / this.blockEntries.size();
-		z = z / this.blockEntries.size();
-		LOGGER.info(String.format("After avg coords are is %f, %f, %f", x, y, z));
+		x = x / entries.size();
+		y = y / entries.size();
+		z = z / entries.size();
 		spawnPoint = new BlockPos((int) x, (int) y, (int) z);
 
 		radious = 0;
-		for (int i = 0; i < this.blockEntries.size(); i++) {
-			radious += Math.sqrt(this.blockEntries.get(i).getSquaredDistance(spawnPoint));
+		for (int i = 0; i < entries.size(); i++) {
+			radious += Math.sqrt(entries.get(i).getSquaredDistance(spawnPoint));
 		}
 		
-		radious = radious / this.blockEntries.size();
+		radious = radious / entries.size();
 		if (radious < 10) {
 			radious = 10;
 		}
 
 
-		this.lastRadius = radious;
-		this.lastPos = spawnPoint;
 		LOGGER.info(String.format("New spawn point: %s, radious: %d", spawnPoint, (int) radious));
 		return new SpawnPointConfig(spawnPoint, (float) radious);
 	}
@@ -111,7 +163,9 @@ public class PosManager extends PersistentState {
 		for (int c: uuidCount.values()) {
 			sum += c;
 		}
-		LOGGER.info(String.format("Current uuidCount sum is: %d", sum));
+		LOGGER.info(String.format("Current uuidCount sum is %d discributed in %d entries",
+									sum,
+									uuidCount.size()));
 
 		// TODO: Update the limit to be player dependant.
 		if (sum > PosManager.MAX_PLAYER_ENTRIES) {
@@ -127,6 +181,7 @@ public class PosManager extends PersistentState {
 
 	@Override
 	public NbtCompound writeNbt(NbtCompound nbt) {
+		engravePosEntries();
 		nbt.putInt("blockEntriesSize", this.blockEntries.size());
 		for (int i = 0; i < this.blockEntries.size(); i++) {
 			nbt.put("entry_" + i, NbtHelper.fromBlockPos(this.blockEntries.get(i)));
