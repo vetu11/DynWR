@@ -50,6 +50,7 @@ public class DynWR implements ModInitializer {
 
 		@Override
 		public void onStopSleeping(LivingEntity entity, BlockPos sleepingPos) {
+			//TODO: check the time to avoid abuse.
 			if (!entity.isPlayer()) return;
 			LOGGER.info("onStopSleeping");
 			this.posManager.addPos(sleepingPos, entity.getUuid(), EventType.SLEEP);
@@ -72,6 +73,7 @@ public class DynWR implements ModInitializer {
 
 		@Override
 		public void afterRespawn(ServerPlayerEntity _oldPlayer, ServerPlayerEntity newPlayer, boolean _alive) {
+			//TODO: What happens when respawning on other dimensions?
 			LOGGER.info("afterRespawn");
 			Vec3d p = newPlayer.getPos();
 			BlockPos pos = new BlockPos((int)p.x, (int)p.y, (int)p.z);
